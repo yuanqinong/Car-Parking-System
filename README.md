@@ -4,7 +4,7 @@ This repository contains a Python project that utilizes computer vision and deep
 
 ## Features
 
-- Detect cars in video or image sources using YOLOv8
+- Detect vehicle in video or image sources using YOLOv8
 - Detect license plates on detected cars using a custom model
 - Perform OCR on the detected license plates using EasyOCR
 - Support for both video and image input
