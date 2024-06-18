@@ -1,15 +1,18 @@
 import cv2
 import easyocr
 from ultralytics import YOLO
-import filetype
 import sqlite3
 from datetime import datetime
 import numpy as np
+from PIL import Image
+import streamlit as st
 # Load models
 
-car_model = YOLO('./src/model/yolov8n.pt')
-license_plate_detector = YOLO('./src/model/license_plate_detector.pt')
-reader = easyocr.Reader(['en'])  # Initialize EasyOCR reader
+def load_model():
+    car_model = YOLO('./src/model/yolov8n.pt')
+    license_plate_detector = YOLO('./src/model/license_plate_detector.pt')
+    plate_reader = easyocr.Reader(['en'])  # Initialize EasyOCR reader
+    return car_model,license_plate_detector,plate_reader
 
 def check_file_type(src):
     kind = filetype.guess(src)
@@ -22,18 +25,23 @@ def check_file_type(src):
         return file_type
 
 def detect_cars(img,conf_threshold,iou_threshold):
+    car_model,license_plate_detector,plate_reader=load_model()
     car_results = car_model(img ,conf=conf_threshold,iou=iou_threshold, agnostic_nms=True)
     return car_results
 
 def detect_license_plates(car_crop,conf_threshold,iou_threshold):
-    license_plate_results = license_plate_detector(car_crop,conf=conf_threshold,iou=iou_threshold)
+    car_model,license_plate_detector,plate_reader=load_model()
+    license_plate_results = license_plate_detector(car_crop,conf=conf_threshold,iou=iou_threshold, stream=True)
     return license_plate_results
 
 def perform_ocr(plate_crop):
-    license_plate_text = reader.readtext(plate_crop, detail=0)
-    license_plate_text = license_plate_text[0].replace(" ", "")
+    car_model,license_plate_detector,plate_reader=load_model()
+    license_plate_text = plate_reader.readtext(plate_crop, detail=0)
+    print("license_plate_text",license_plate_text)
+    if license_plate_text:
+        license_plate_text = license_plate_text[0].replace(" ", "")
     #print(f"Detected license plate: {license_plate_text}")
-    return license_plate_text
+        return license_plate_text
 
 def calculate_parking_fee(parking_duration):
     # Calculate total duration in minutes
@@ -56,57 +64,35 @@ def process_image(src,conf_threshold,iou_threshold):
     #car_image = cv2.imread(src)
     # Convert the file to OpenCV image
     file_bytes = np.asarray(bytearray(src.read()), dtype=np.uint8)
-    opencv_image = cv2.imdecode(file_bytes, 1)
-    car_results = detect_cars(opencv_image,conf_threshold,iou_threshold)
+    converted_image = cv2.imdecode(file_bytes, 1)
+    # Initialize with default values
+    plate_crop = []
+    car_plate = None
+    output_log = None
+    detected_img = None
 
-    if car_results:
-        for car_result in car_results:
-            boxes = car_result.boxes.xyxy.to('cpu').numpy().astype(int)
 
-            for box in boxes:
+    license_plate_results = detect_license_plates(converted_image,conf_threshold,iou_threshold)
+    print("license_plate_results",license_plate_results[0])
+    # Visualize the results
+    for i, detected_image in enumerate(license_plate_results):
+        # Plot results image
+        im_bgr = detected_image.plot()  # BGR-order numpy array
+        detected_img = Image.fromarray(im_bgr[..., ::-1])  # RGB-order PIL image
+        print("detected_image",detected_img)
+        
+    if license_plate_results:  # Check if license_plate_results is not empty
+
+        for license_plate_result in license_plate_results:
+            license_boxes = license_plate_result.boxes.xyxy.to('cpu').numpy().astype(int)
+            for box in license_boxes:
                 x_min, y_min, x_max, y_max = box
-                car_crop = opencv_image[y_min:y_max, x_min:x_max]
+                plate_crop = converted_image[y_min:y_max, x_min:x_max]
+                car_plate = perform_ocr(plate_crop)
+                output_log = process_car_plate(car_plate)
 
-                license_plate_results = detect_license_plates(car_crop,conf_threshold,iou_threshold)
-                if license_plate_results:  # Check if license_plate_results is not empty
+    return plate_crop,car_plate,output_log,detected_img
 
-                    for license_plate_result in license_plate_results:
-                        license_boxes = license_plate_result.boxes.xyxy.to('cpu').numpy().astype(int)
-                        for box in license_boxes:
-                            x_min, y_min, x_max, y_max = box
-                            plate_crop = car_crop[y_min:y_max, x_min:x_max]
-                            car_plate = perform_ocr(plate_crop)
-                            output_log = process_car_plate(car_plate)
-    return plate_crop,car_plate,output_log
-
-def process_video(src):
-    cap = cv2.VideoCapture(src)
-    ret = True
-
-    while ret:
-        ret, frame = cap.read()
-        if ret:
-            car_results = detect_cars(frame)
-
-            if car_results:
-                for car_result in car_results:
-                    boxes = car_result.boxes.xyxy.to('cpu').numpy().astype(int)
-
-                    for box in boxes:
-                        x_min, y_min, x_max, y_max = box
-                        car_crop = frame[y_min:y_max, x_min:x_max]
-
-                        license_plate_results = detect_license_plates(car_crop)
-                        if license_plate_results:
-                            for license_plate_result in license_plate_results:
-                                license_boxes = license_plate_result.boxes.xyxy.to('cpu').numpy().astype(int)
-                                for box in license_boxes:
-                                    x_min, y_min, x_max, y_max = box
-                                    plate_crop = car_crop[y_min:y_max, x_min:x_max]
-                                    car_plate = perform_ocr(plate_crop)
-                                    process_car_plate(car_plate)
-
-    cap.release()
 
 def insert_parking_log(car_plate):
     # Connect to the SQLite database (it will be created if it doesn't exist)
@@ -201,12 +187,15 @@ def view_db():
 
     conn.close()
 
+"""
 def detect(src):
     file_type = check_file_type(src)
     if file_type == "image":
         process_image(src)
     elif file_type == "video":
         process_video(src)
+"""
+
 
 if __name__ == "__main__":
     detect("./src/sample/images/JWD6338.jpeg")
