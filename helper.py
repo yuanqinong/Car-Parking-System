@@ -14,34 +14,21 @@ def load_model():
     plate_reader = easyocr.Reader(['en'])  # Initialize EasyOCR reader
     return car_model,license_plate_detector,plate_reader
 
-def check_file_type(src):
-    kind = filetype.guess(src)
-    mime_type = kind.mime
-    file_type = mime_type.split("/")[0]
-    if file_type not in ["image", "video"]:
-        print('Please input video or image file only!')
-        return
-    else:
-        return file_type
-
-def detect_cars(img,conf_threshold,iou_threshold):
-    car_model,license_plate_detector,plate_reader=load_model()
-    car_results = car_model(img ,conf=conf_threshold,iou=iou_threshold, agnostic_nms=True)
-    return car_results
 
 def detect_license_plates(car_crop,conf_threshold,iou_threshold):
     car_model,license_plate_detector,plate_reader=load_model()
-    license_plate_results = license_plate_detector(car_crop,conf=conf_threshold,iou=iou_threshold, stream=True)
+    license_plate_results = license_plate_detector(car_crop,conf=conf_threshold,iou=iou_threshold)
     return license_plate_results
 
 def perform_ocr(plate_crop):
-    car_model,license_plate_detector,plate_reader=load_model()
+    car_model, license_plate_detector, plate_reader = load_model()
     license_plate_text = plate_reader.readtext(plate_crop, detail=0)
-    print("license_plate_text",license_plate_text)
+    print("license_plate_text", license_plate_text)
     if license_plate_text:
-        license_plate_text = license_plate_text[0].replace(" ", "")
+        # Join the list of license plate texts into a single string
+        license_plate_text = ''.join(text.replace(" ", "") for text in license_plate_text)
     #print(f"Detected license plate: {license_plate_text}")
-        return license_plate_text
+    return license_plate_text
 
 def calculate_parking_fee(parking_duration):
     # Calculate total duration in minutes
@@ -71,25 +58,22 @@ def process_image(src,conf_threshold,iou_threshold):
     output_log = None
     detected_img = None
 
-
     license_plate_results = detect_license_plates(converted_image,conf_threshold,iou_threshold)
-    print("license_plate_results",license_plate_results[0])
     # Visualize the results
     for i, detected_image in enumerate(license_plate_results):
         # Plot results image
         im_bgr = detected_image.plot()  # BGR-order numpy array
         detected_img = Image.fromarray(im_bgr[..., ::-1])  # RGB-order PIL image
-        print("detected_image",detected_img)
         
     if license_plate_results:  # Check if license_plate_results is not empty
-
         for license_plate_result in license_plate_results:
             license_boxes = license_plate_result.boxes.xyxy.to('cpu').numpy().astype(int)
             for box in license_boxes:
                 x_min, y_min, x_max, y_max = box
                 plate_crop = converted_image[y_min:y_max, x_min:x_max]
                 car_plate = perform_ocr(plate_crop)
-                output_log = process_car_plate(car_plate)
+                if len(car_plate)>0:
+                    output_log = process_car_plate(car_plate)
 
     return plate_crop,car_plate,output_log,detected_img
 
@@ -186,17 +170,3 @@ def view_db():
         print(row)
 
     conn.close()
-
-"""
-def detect(src):
-    file_type = check_file_type(src)
-    if file_type == "image":
-        process_image(src)
-    elif file_type == "video":
-        process_video(src)
-"""
-
-
-if __name__ == "__main__":
-    detect("./src/sample/images/JWD6338.jpeg")
-    view_db()
