@@ -110,6 +110,8 @@ elif source == "Webcam":
     col1, col2, col3 = st.columns(3)
     plate_crop_placeholder = col2.empty()
     detection_log_placeholder = col3.empty()
+    log_key = 0  # Initialize a unique key for the "No car plate in image..." message
+
     while True:
         # Read a frame from the webcam
         ret, frame = cap.read()
@@ -122,7 +124,7 @@ elif source == "Webcam":
                     x_min, y_min, x_max, y_max = box
                     plate_crop = frame[y_min:y_max, x_min:x_max]
                     car_plate = helper.perform_ocr(plate_crop)
-                    if len(car_plate)>0:
+                    if len(car_plate) > 0:
                         output_log = helper.process_car_plate(car_plate)
             with col1:
                 # Annotate the frame with bounding boxes and labels
@@ -136,7 +138,8 @@ elif source == "Webcam":
                     plate_crop_placeholder.empty()
             with detection_log_placeholder:
                 if len(plate_crop) > 0:
-                    detection_log_placeholder.text_area("Detection Log", value=output_log, height=300)
+                    detection_log_placeholder.text_area("Detection Log", value=output_log, height=300, key=f"log_{log_key}")
                 else:
-                    detection_log_placeholder.text_area("Detection Log", value="No car plate in image...", height=300)
-        time.sleep(5)
+                    detection_log_placeholder.text_area("Detection Log", value="No car plate in image...", height=300, key=f"log_{log_key}")
+            log_key += 1  # Increment the key for each new log entry
+        #time.sleep(5)

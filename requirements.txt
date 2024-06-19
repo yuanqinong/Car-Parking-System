@@ -2,4 +2,3 @@ ultralytics
 supervision
 easyocr
 streamlit
-streamlit-webrtc
