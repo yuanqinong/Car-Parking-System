@@ -33,11 +33,9 @@ streamlit run app.py
 
 2. Choose the input mode (image, video, or webcam) from the provided options.
 
-3. For image or video input, provide the file path when prompted.
+3. The system will detect vehicles in the input, extract their license plate numbers using EasyOCR, and record the check-in/check-out times in the database.
 
-4. The system will detect vehicles in the input, extract their license plate numbers using EasyOCR, and record the check-in/check-out times in the database.
-
-5. The parking fee will be calculated based on the duration of stay and displayed in the log screen.
+4. The parking fee will be calculated based on the duration of stay and displayed in the log screen.
 
 ## Future Improvements
 
