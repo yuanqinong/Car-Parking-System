@@ -9,7 +9,14 @@ This is a car park management system built using YOLOv8 object detection model a
 - Storage of license plate numbers and check-in/check-out times in SQLite database
 - Calculation and display of parking fees
 
-## Live Demo
+## Demo
+WebCam
+![](https://github.com/yuanqinong/Car-Parking-System/blob/main/webcam_demo.gif)
+
+Image Input
+![](https://github.com/yuanqinong/Car-Parking-System/blob/main/picture_input_demo.gif)
+
+Live Demo
 https://yuanqinong-car-parking-system-app-cmd2u1.streamlit.app/
 
 ## Installation
