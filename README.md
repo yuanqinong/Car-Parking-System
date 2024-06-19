@@ -6,7 +6,7 @@ This is a car park management system built using YOLOv8 object detection model a
 
 - License plate recognition using EasyOCR
 - Support for image, video, and real-time webcam input
-- Storage of license plate numbers and check-in/check-out times in SQLite database
+- Storage of license plate numbers and check-in/check-out times in SQLite3 database
 - Calculation and display of parking fees
 
 ## Demo
@@ -50,4 +50,4 @@ streamlit run app.py
 ## Future Improvements
 
 - Implement computer vision technology to monitor the remaining car park lots and display the availability.
-- Introduce a detection zone where license plate recognition will only be triggered after a vehicle enters the designated area, preventing false detections.
+- Introduce a detection zone where license plate recognition will only be triggered after a vehicle enters the designated area, preventing false detections and improving accuracy.
