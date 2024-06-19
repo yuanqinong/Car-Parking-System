@@ -1,25 +1,45 @@
-# Car Parking System
+# Car Park System
 
-This repository contains a Python project that utilizes computer vision and deep learning techniques to detect cars and license plates from video or image sources. The system uses the YOLOv8 object detection model for car detection and a custom license plate detection model, along with EasyOCR for optical character recognition (OCR) on the detected license plates.
+This is a car park management system built using YOLOv8 object detection model and EasyOCR for license plate recognition. The system supports image, video, and real-time webcam input for detecting vehicles and extracting their license plate numbers. The detected license plates and their corresponding check-in and check-out times are stored in a SQLite database, and the parking fee is calculated and displayed to the customer in a log screen. 
 
 ## Features
 
-- Detect vehicle in video or image sources using YOLOv8
-- Detect license plates on detected cars using a custom model
-- Perform OCR on the detected license plates using EasyOCR
-- Support for both video and image input
-
-## Requirements
-
-- Python 3.6 or higher
-- OpenCV
-- EasyOCR
-- Ultralytics (YOLOv8)
-- filetype
+- License plate recognition using EasyOCR
+- Support for image, video, and real-time webcam input
+- Storage of license plate numbers and check-in/check-out times in SQLite database
+- Calculation and display of parking fees
 
 ## Installation
 
 1. Clone the repository:
 
-```bash
-git clone https://github.com/your-username/car-parking-system.git
+```
+git clone https://github.com/your-username/car-park-system.git
+```
+
+2. Install the required dependencies:
+
+```
+pip install -r requirements.txt
+```
+
+## Usage
+
+1. Run the main script:
+
+```
+streamlit run app.py
+```
+
+2. Choose the input mode (image, video, or webcam) from the provided options.
+
+3. For image or video input, provide the file path when prompted.
+
+4. The system will detect vehicles in the input, extract their license plate numbers using EasyOCR, and record the check-in/check-out times in the database.
+
+5. The parking fee will be calculated based on the duration of stay and displayed in the log screen.
+
+## Future Improvements
+
+- Implement computer vision technology to monitor the remaining car park lots and display the availability.
+- Introduce a detection zone where license plate recognition will only be triggered after a vehicle enters the designated area, preventing false detections.
